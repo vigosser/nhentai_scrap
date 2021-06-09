@@ -59,12 +59,20 @@ def request_until_success(url):
             flag = False
     return res
 
-@vthread.pool(10)
+@vthread.pool(30)
+def download_pic(j,_count,_name):
+    u = j.a.img['data-src']
+    u = u.replace('t.jpg', '.jpg').replace('t.nhentai.net', 'i.nhentai.net')
+    Getfile(u).downfile(str(_count) + '.jpg', _name)
+    log(str(_count))
+
+
+# @vthread.pool(8)
 def get_singl(k):
     link = 'https://nhentai.net' + k.a['href']
     code=k.a['href'].split('/')[-2]
     name = k.find('div', class_='caption').text
-    name=name.replace('\\','').replace('/','').replace(':','').\
+    name=name.replace('\\','').replace('/','').replace(':','').replace('！','').replace('\"','').\
         replace('*','').replace('<','').replace('>','').replace('|','').replace('?','')\
         .replace(' ','_')
     # if len(name)>30:
@@ -78,11 +86,10 @@ def get_singl(k):
 
     sp = BeautifulSoup(rsp.strip(), 'html.parser')
     count = 0
-    for j in sp.findAll('div', class_='thumb-container'):
-        u = j.a.img['data-src']
-        Getfile(u).downfile(str(count) + '.jpg', name)
-        log(str(count))
+    for _j in sp.findAll('div', class_='thumb-container'):
+        download_pic(_j, count, name)
         count = count + 1
+    vthread.pool.waitall()
     log('complete:{} page on {}'.format(str(count), name))
 
 for i in range(1,100):
